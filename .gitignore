@@ -1,0 +1,67 @@
+# Vendor docs (support-gated; never commit)
+vendor-docs/
+
+# Environment-specific local instructions (deployment, CI, secret wiring).
+# Kept on the operator's disk, never committed. Copy CLAUDE.local.md.example
+# to start; the .example template stays tracked.
+CLAUDE.local.md
+
+# Plaintext secrets — never commit. Dev creds live OUTSIDE the repo at
+# ~/.config/briihass/credentials.env (mode 600). See ADR-0003.
+.env
+*.env
+!*.env.example
+.secrets/
+**/credentials.env
+**/credentials.json
+
+# Stray key material (defense in depth — none of these should ever appear
+# in the repo, but if one does, .gitignore catches it).
+keys.txt
+age-key.txt
+*.key
+*.pem
+
+# Go build artifacts
+/briihass
+/bin/
+/dist/
+*.test
+*.out
+coverage.txt
+
+# Output of cmd/captured — captured payloads may contain MACs / beacon UUIDs.
+captures/
+blecaps/
+blescans/
+
+# Editor / IDE
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+
+# Claude / Serena / Swarm runtime state (committed skills/config stay tracked)
+.claude/memory.db
+.claude/last-compact-state.txt
+.claude/last-session-state.txt
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/serena-memory/archive/
+.serena/cache/
+.swarm/
+.worktrees/
+
+# Hook scratch space (the dir itself is tracked via .gitkeep; logs are not)
+.remember/logs/*
+!.remember/logs/.gitkeep
+
+# Node (if any tooling ever needs it)
+node_modules/
+old-context/

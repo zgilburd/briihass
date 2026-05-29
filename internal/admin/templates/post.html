@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>briihass — POST envelope #{{ .ID }}</title>
+<link rel="stylesheet" href="/admin-static/style.css">
+</head>
+<body>
+<header>
+  <h1>briihass <span class="muted">POST envelope #{{ .ID }}</span></h1>
+  {{ template "nav" "devices" }}
+</header>
+
+<section>
+  <p>
+    <strong>{{ .Endpoint }}</strong> received {{ fmtTime .ReceivedAt }}
+    {{ if .RemoteAddr }} from <code>{{ .RemoteAddr }}</code>{{ end }}
+    {{ if .Encoding }} &middot; Content-Encoding <code>{{ .Encoding }}</code>{{ end }}
+    &middot; {{ .SizeBytes }} bytes (compressed)
+  </p>
+  <p class="muted small">sha256 <code>{{ .SHA256 }}</code></p>
+  {{ if .DecodeNotice }}<p class="muted small">{{ .DecodeNotice }}</p>{{ end }}
+</section>
+
+{{ if .PrettyJSON }}
+<section>
+  <h2>Body</h2>
+  <pre class="json">{{ .PrettyJSON }}</pre>
+</section>
+{{ end }}
+
+<footer>
+  <p class="muted small">briihass commit <code>{{ .Commit }}</code></p>
+</footer>
+</body>
+</html>

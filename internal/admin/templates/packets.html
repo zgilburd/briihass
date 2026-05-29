@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>briihass — packets</title>
+<link rel="stylesheet" href="/admin-static/style.css">
+</head>
+<body>
+<header>
+  <h1>briihass <span class="muted">packets — {{ if .BeaconName }}{{ .BeaconName }}{{ else }}{{ .Kind }}.{{ .Key }}{{ end }}</span></h1>
+  {{ template "nav" "devices" }}
+</header>
+
+{{ if .Error }}<section class="errors"><p>{{ .Error }}</p></section>{{ end }}
+
+<section>
+  <p class="muted small">
+    kind <code>{{ .Kind }}</code> &middot; key <code>{{ .Key }}</code>
+    {{ if .BeaconName }} &middot; tracked as <strong>{{ .BeaconName }}</strong>{{ else }} &middot; observed-only{{ end }}
+  </p>
+</section>
+
+{{ range .Observations }}
+<article class="packet">
+  <h3>{{ fmtTime .ObservedAt }} <span class="muted small">id #{{ .ID }}</span></h3>
+  <p>
+    AP <code>{{ .APMac }}</code>{{ if .APName }} <span class="muted small">({{ .APName }})</span>{{ end }}
+    &middot; RSSI <strong>{{ .RSSI }}</strong>
+    {{ if .TxPower }} &middot; TX <strong>{{ .TxPower }}</strong>{{ end }}
+    {{ if .Battery }} &middot; battery <strong>{{ .Battery }}</strong>{{ end }}
+    {{ if .Temp }} &middot; temp <strong>{{ .Temp }}</strong>{{ end }}
+    {{ if .LocalName }} &middot; name <strong>{{ .LocalName }}</strong>{{ end }}
+    {{ if .RawPostID }} &middot; <a href="/admin/posts/{{ printf "%d" (deref64 .RawPostID) }}">envelope #{{ printf "%d" (deref64 .RawPostID) }}</a>{{ end }}
+  </p>
+  {{ if .Identity }}
+  <p>Decoded identity: <code>{{ .Identity }}</code></p>
+  {{ end }}
+  {{ if .RawHex }}
+  <p class="muted small">Raw hex:</p>
+  <pre class="hex">{{ .RawHex }}</pre>
+  {{ else }}
+  <p class="muted small">{{ .TLVNotice }}</p>
+  {{ end }}
+  {{ if .TLV }}
+  <table>
+    <thead><tr><th class="num">offset</th><th class="num">type</th><th class="num">len</th><th>label</th><th>value (hex)</th></tr></thead>
+    <tbody>
+      {{ range .TLV }}
+      <tr>
+        <td class="num">{{ .Offset }}</td>
+        <td class="num"><code>0x{{ printf "%02X" .Type }}</code></td>
+        <td class="num">{{ .Length }}</td>
+        <td>{{ .Label }}</td>
+        <td><code>{{ printf "%X" .Value }}</code></td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ end }}
+  {{ if .TLVNotice }}<p class="muted small">{{ .TLVNotice }}</p>{{ end }}
+</article>
+{{ else }}
+<p class="muted">No observations recorded yet for this device.</p>
+{{ end }}
+
+<footer>
+  <p class="muted small">briihass commit <code>{{ .Commit }}</code></p>
+</footer>
+</body>
+</html>

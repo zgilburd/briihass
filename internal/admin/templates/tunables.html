@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>briihass — tunables</title>
+<link rel="stylesheet" href="/admin-static/style.css">
+</head>
+<body>
+<header>
+  <h1>briihass <span class="muted">tunables</span></h1>
+  {{ template "nav" "tunables" }}
+</header>
+
+{{ if .Errors }}
+<section class="errors">
+  <h2>Validation errors</h2>
+  <ul>{{ range .Errors }}<li>{{ . }}</li>{{ end }}</ul>
+  <p class="small">Your edits are preserved below; fix the errors and resubmit.</p>
+</section>
+{{ end }}
+
+<form method="post" action="/admin/tunables">
+
+<section>
+  <h2>Defaults</h2>
+  <p class="muted small">Every beacon uses these unless it has an override below.</p>
+  <table class="form">
+    <tr><th><label for="default_alpha">alpha</label></th>
+        <td><input type="number" id="default_alpha" name="default_alpha" step="0.01" value="{{ .Tunables.Defaults.Alpha }}"></td>
+        <td class="muted small">EWMA smoothing weight in (0,1].</td></tr>
+    <tr><th><label for="default_grace_period_s">grace_period_s</label></th>
+        <td><input type="number" id="default_grace_period_s" name="default_grace_period_s" value="{{ .Tunables.Defaults.GracePeriodS }}"></td>
+        <td class="muted small">Seconds after a sighting where the EWMA holds without decay.</td></tr>
+    <tr><th><label for="default_decay_rate_db_per_s">decay_rate_db_per_s</label></th>
+        <td><input type="number" id="default_decay_rate_db_per_s" name="default_decay_rate_db_per_s" step="0.1" value="{{ .Tunables.Defaults.DecayRateDbPerS }}"></td>
+        <td class="muted small">Linear decay after grace.</td></tr>
+    <tr><th><label for="default_presence_floor_dbm">presence_floor_dbm</label></th>
+        <td><input type="number" id="default_presence_floor_dbm" name="default_presence_floor_dbm" value="{{ .Tunables.Defaults.PresenceFloorDbm }}"></td>
+        <td class="muted small">In [-127, 0]. Below this, an AP loses presence.</td></tr>
+    <tr><th><label for="default_t_away_max_s">t_away_max_s</label></th>
+        <td><input type="number" id="default_t_away_max_s" name="default_t_away_max_s" value="{{ .Tunables.Defaults.TAwayMaxS }}"></td>
+        <td class="muted small">Hard upper bound on silence before forcing not_home (outside sticky).</td></tr>
+    <tr><th><label for="default_sticky_after_arrival_s">sticky_after_arrival_s</label></th>
+        <td><input type="number" id="default_sticky_after_arrival_s" name="default_sticky_after_arrival_s" value="{{ .Tunables.Defaults.StickyAfterArrivalS }}"></td>
+        <td class="muted small">Minimum guaranteed dwell after arrival. 0 disables.</td></tr>
+    <tr><th><label for="default_hysteresis_db">hysteresis_db</label></th>
+        <td><input type="number" id="default_hysteresis_db" name="default_hysteresis_db" step="0.1" value="{{ .Tunables.Defaults.HysteresisDb }}"></td>
+        <td class="muted small">Gap required to switch zones in steady state.</td></tr>
+    <tr><th><label for="default_confirm_count">confirm_count</label></th>
+        <td><input type="number" id="default_confirm_count" name="default_confirm_count" value="{{ .Tunables.Defaults.ConfirmCount }}"></td>
+        <td class="muted small">Consecutive sightings to confirm a zone switch.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Per-beacon overrides</h2>
+  <p class="muted small">Leave a field empty to inherit the default. Saving a value here pins it for that beacon.</p>
+  {{ range $name := .BeaconNames }}
+  {{ $ov := index $.Tunables.Beacons $name }}
+  <details>
+    <summary>{{ $name }}</summary>
+    <table class="form">
+      <tr><th><label for="beacon_{{ $name }}_alpha">alpha</label></th>
+          <td><input type="number" id="beacon_{{ $name }}_alpha" name="beacon_{{ $name }}_alpha" step="0.01" value="{{ derefFloat $ov.Alpha }}"></td></tr>
+      <tr><th><label for="beacon_{{ $name }}_grace_period_s">grace_period_s</label></th>
+          <td><input type="number" id="beacon_{{ $name }}_grace_period_s" name="beacon_{{ $name }}_grace_period_s" value="{{ derefInt $ov.GracePeriodS }}"></td></tr>
+      <tr><th><label for="beacon_{{ $name }}_decay_rate_db_per_s">decay_rate_db_per_s</label></th>
+          <td><input type="number" id="beacon_{{ $name }}_decay_rate_db_per_s" name="beacon_{{ $name }}_decay_rate_db_per_s" step="0.1" value="{{ derefFloat $ov.DecayRateDbPerS }}"></td></tr>
+      <tr><th><label for="beacon_{{ $name }}_presence_floor_dbm">presence_floor_dbm</label></th>
+          <td><input type="number" id="beacon_{{ $name }}_presence_floor_dbm" name="beacon_{{ $name }}_presence_floor_dbm" value="{{ derefInt $ov.PresenceFloorDbm }}"></td></tr>
+      <tr><th><label for="beacon_{{ $name }}_t_away_max_s">t_away_max_s</label></th>
+          <td><input type="number" id="beacon_{{ $name }}_t_away_max_s" name="beacon_{{ $name }}_t_away_max_s" value="{{ derefInt $ov.TAwayMaxS }}"></td></tr>
+      <tr><th><label for="beacon_{{ $name }}_sticky_after_arrival_s">sticky_after_arrival_s</label></th>
+          <td><input type="number" id="beacon_{{ $name }}_sticky_after_arrival_s" name="beacon_{{ $name }}_sticky_after_arrival_s" value="{{ derefInt $ov.StickyAfterArrivalS }}"></td></tr>
+      <tr><th><label for="beacon_{{ $name }}_hysteresis_db">hysteresis_db</label></th>
+          <td><input type="number" id="beacon_{{ $name }}_hysteresis_db" name="beacon_{{ $name }}_hysteresis_db" step="0.1" value="{{ derefFloat $ov.HysteresisDb }}"></td></tr>
+      <tr><th><label for="beacon_{{ $name }}_confirm_count">confirm_count</label></th>
+          <td><input type="number" id="beacon_{{ $name }}_confirm_count" name="beacon_{{ $name }}_confirm_count" value="{{ derefInt $ov.ConfirmCount }}"></td></tr>
+    </table>
+  </details>
+  {{ end }}
+</section>
+
+<section>
+  <button type="submit">Save</button>
+  <p class="muted small">Save updates the tunables rows in Postgres and hot-reloads the presence engine. No restart.</p>
+</section>
+
+</form>
+
+<footer>
+  <p class="muted small">briihass commit <code>{{ .Commit }}</code></p>
+</footer>
+</body>
+</html>

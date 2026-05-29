@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>briihass — devices</title>
+<link rel="stylesheet" href="/admin-static/style.css">
+</head>
+<body>
+<header>
+  <h1>briihass <span class="muted">devices</span></h1>
+  {{ template "nav" "devices" }}
+</header>
+
+{{ if .Notice }}<section class="notice"><p>{{ .Notice }}</p></section>{{ end }}
+{{ if .Error }}<section class="errors"><p>{{ .Error }}</p></section>{{ end }}
+{{ if .RebuildError }}
+<section class="errors">
+  <p><strong>Engine refresh failed:</strong> {{ .RebuildError }}</p>
+  <p class="muted small">The change is persisted in the database but the live engine hasn't picked it up yet. Click Retry below, or restart the bridge to force a topology reload from Postgres.</p>
+  <form method="post" action="{{ .RetryURL }}" style="display:inline">
+    <button type="submit">Retry engine refresh</button>
+  </form>
+</section>
+{{ end }}
+{{ if gt .OrphansReconciled 0 }}
+<section class="notice">
+  <p>Reconciled {{ .OrphansReconciled }} orphan HA entit{{ if eq .OrphansReconciled 1 }}y{{ else }}ies{{ end }} after engine refresh.</p>
+</section>
+{{ end }}
+{{ if .ReconcileError }}
+<section class="errors">
+  <p><strong>Engine refreshed, but orphan reconcile failed:</strong> {{ .ReconcileError }}</p>
+  <p class="muted small">The engine is in sync with Postgres, but any HA entity that was deleted from the DB while the MQTT broker was unreachable may still linger. Retry the refresh once broker connectivity recovers.</p>
+</section>
+{{ end }}
+
+<section>
+  <form method="get" action="/admin/devices" class="window">
+    <label>Window
+      <input type="number" name="window_n" min="1" value="{{ .WindowN }}" style="width:5em">
+      <select name="window_unit">
+        <option value="m"{{ if eq .WindowUnit "m" }} selected{{ end }}>minutes</option>
+        <option value="h"{{ if eq .WindowUnit "h" }} selected{{ end }}>hours</option>
+        <option value="d"{{ if eq .WindowUnit "d" }} selected{{ end }}>days</option>
+      </select>
+    </label>
+    <button type="submit">apply</button>
+    <span class="muted small">retention {{ .RetentionDays }}d &middot; showing last {{ .WindowLabel }}</span>
+  </form>
+  <form method="post" action="/admin/devices/resync-ha" style="display:inline">
+    <button type="submit" title="Re-publish all HA discovery configs (use if a device was deleted in Home Assistant)">Resync HA</button>
+  </form>
+</section>
+
+<section>
+  <h2>Tracked ({{ len .Tracked }})</h2>
+  {{ if .Tracked }}
+  <table>
+    <thead>
+      <tr><th>name</th><th>kind / key</th><th>last AP</th><th class="num">RSSI</th><th class="num">last seen</th><th class="num">sightings</th><th>actions</th></tr>
+    </thead>
+    <tbody>
+      {{ range .Tracked }}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td><span class="muted small">{{ .Kind }}</span> <code>{{ .Key }}</code></td>
+        <td><code>{{ .LastAPMac }}</code> {{ if .LastAPName }}<span class="muted small">({{ .LastAPName }})</span>{{ end }}</td>
+        <td class="num">{{ .LastRSSI }}</td>
+        <td class="num">{{ fmtAge .AgeSeconds }} ago</td>
+        <td class="num">{{ .SightingCnt }}</td>
+        <td>
+          <a href="{{ .PacketURL }}">packets</a>
+          <form method="post" action="/admin/devices/demote" style="display:inline">
+            <input type="hidden" name="slug" value="{{ .Slug }}">
+            <button type="submit" class="danger" onclick="return confirm('Demote {{ .Name }}? HA entity will be removed.')">demote</button>
+          </form>
+        </td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ else }}
+  <p class="muted">No tracked beacons. Promote one from below to start publishing to HA.</p>
+  {{ end }}
+</section>
+
+<section>
+  <h2>Observed only ({{ len .Observed }})</h2>
+  <p class="muted small">Beacons seen by APs but not on the allowlist. Promote to start publishing to HA.</p>
+  {{ if .Observed }}
+  <table>
+    <thead>
+      <tr><th>kind / key</th><th>last AP</th><th class="num">RSSI</th><th class="num">last seen</th><th class="num">sightings</th><th>promote</th></tr>
+    </thead>
+    <tbody>
+      {{ range .Observed }}
+      <tr>
+        <td><span class="muted small">{{ .Kind }}</span> <code>{{ .Key }}</code></td>
+        <td><code>{{ .LastAPMac }}</code> {{ if .LastAPName }}<span class="muted small">({{ .LastAPName }})</span>{{ end }}</td>
+        <td class="num">{{ .LastRSSI }}</td>
+        <td class="num">{{ fmtAge .AgeSeconds }} ago</td>
+        <td class="num">{{ .SightingCnt }}</td>
+        <td>
+          <form method="post" action="/admin/devices/promote">
+            <input type="hidden" name="slug" value="{{ .Slug }}">
+            <input type="text" name="name" placeholder="entity name" required>
+            <input type="text" name="notes" placeholder="notes (optional)">
+            <button type="submit">promote</button>
+          </form>
+          &middot;
+          <a href="{{ .PacketURL }}">packets</a>
+        </td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ else }}
+  <p class="muted">No observed-only devices in the selected window.</p>
+  {{ end }}
+</section>
+
+<footer>
+  <p class="muted small">briihass commit <code>{{ .Commit }}</code></p>
+</footer>
+</body>
+</html>

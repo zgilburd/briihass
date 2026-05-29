@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>briihass — zones</title>
+<link rel="stylesheet" href="/admin-static/style.css">
+</head>
+<body>
+<header>
+  <h1>briihass <span class="muted">zones</span></h1>
+  {{ template "nav" "zones" }}
+</header>
+
+{{ if .Notice }}<section class="notice"><p>{{ .Notice }}</p></section>{{ end }}
+{{ if .Error }}<section class="errors"><p>{{ .Error }}</p></section>{{ end }}
+{{ if .RebuildError }}
+<section class="errors">
+  <p><strong>Engine refresh failed:</strong> {{ .RebuildError }}</p>
+  <p class="muted small">The zone change is persisted in the database but the live engine hasn't picked it up yet. Click Retry below, or restart the bridge to force a topology reload from Postgres.</p>
+  <form method="post" action="{{ .RetryURL }}" style="display:inline">
+    <button type="submit">Retry engine refresh</button>
+  </form>
+</section>
+{{ end }}
+
+<section>
+  <p class="muted small">Each AP MAC maps to a zone label that becomes the HA device_tracker state. APs without a label are excluded from presence resolution.</p>
+  <table>
+    <thead>
+      <tr><th>AP MAC</th><th>AP name (observed)</th><th>zone label</th><th>actions</th></tr>
+    </thead>
+    <tbody>
+      {{ range .Rows }}
+      <tr>
+        <td><code>{{ .APMac }}</code>{{ if not .Known }} <span class="muted small">(unassigned)</span>{{ end }}</td>
+        <td>{{ .APName }}</td>
+        <td>
+          <form method="post" action="/admin/zones" style="display:inline">
+            <input type="hidden" name="ap_mac" value="{{ .APMac }}">
+            <input type="hidden" name="ap_name" value="{{ .APName }}">
+            <input type="text" name="zone_label" value="{{ .ZoneLabel }}" placeholder="zone_a" required>
+            <button type="submit">save</button>
+          </form>
+        </td>
+        <td>
+          {{ if .Known }}
+          <form method="post" action="/admin/zones" style="display:inline">
+            <input type="hidden" name="ap_mac" value="{{ .APMac }}">
+            <input type="hidden" name="action" value="delete">
+            <button type="submit" class="danger" onclick="return confirm('Delete zone for {{ .APMac }}?')">delete</button>
+          </form>
+          {{ end }}
+        </td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <p class="muted small">briihass commit <code>{{ .Commit }}</code></p>
+</footer>
+</body>
+</html>

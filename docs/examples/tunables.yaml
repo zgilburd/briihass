@@ -1,0 +1,70 @@
+# tunables-seed.yaml — example cold-start seed for the state-machine knobs.
+#
+# Tunables are Postgres-resident (see ADR-0007) and edited live via the admin
+# UI (/admin/tunables) with no restart. This YAML is used ONLY on cold start:
+# when the tunables tables are empty, the bridge reads the file at
+# BRIIHASS_TUNABLES_SEED (default /etc/briihass/tunables-seed.yaml) and writes
+# it as the initial state. Once Postgres has values, the seed is ignored.
+#
+# Copy this file, adjust the values, and point BRIIHASS_TUNABLES_SEED at it.
+# The values shown are the ADR-0006 defaults.
+
+# Bridge-wide defaults. Each beacon gets these unless it has an entry
+# in the `beacons:` map below that overrides specific fields. The
+# values shown are the ADR-0006 defaults — adjust as needed.
+defaults:
+  # Smoothing weight for the per-AP exponentially weighted moving
+  # average of RSSI. In (0, 1]. Higher = react faster to new
+  # samples; lower = smoother. Default 0.4 weights the newest
+  # sample 40% against 60% history.
+  alpha: 0.4
+
+  # Seconds after a sighting during which the EWMA holds without
+  # decay. Default 5 absorbs single-scan misses.
+  grace_period_s: 5
+
+  # After grace_period_s, the effective RSSI fades linearly at this
+  # rate (dB/sec). Default 2 dB/s makes a -75 dBm signal hit the
+  # floor (-95 dBm by default) about 15 seconds after the last
+  # sighting; weaker signals fade faster.
+  decay_rate_db_per_s: 2.0
+
+  # Effective RSSI floor below which an AP loses presence for the
+  # beacon. In [-127, 0]. Default -95 dBm is roughly edge-of-range
+  # for indoor BLE.
+  presence_floor_dbm: -95
+
+  # Hard upper bound: if no AP has reported the beacon for this many
+  # seconds AND we're outside the sticky window, declare not_home
+  # regardless of decay math. Default 30 s.
+  t_away_max_s: 30
+
+  # After every not_home -> <zone> transition, the bridge will NOT
+  # publish not_home for this many seconds. Zone-to-zone updates
+  # still publish during this window. This protects the arrival path
+  # from brief AP coverage gaps; see ADR-0006. Set to 0 to disable.
+  sticky_after_arrival_s: 120
+
+  # Effective-RSSI gap (dB) required to switch published zone from
+  # the current closest AP to a different AP. Applies only to
+  # steady-state zone-to-zone transitions, never to not_home -> zone.
+  hysteresis_db: 4.0
+
+  # Consecutive sightings that must agree before a steady-state
+  # zone-to-zone switch publishes. Applies only to zone-to-zone,
+  # never to not_home -> zone.
+  confirm_count: 2
+
+# Per-beacon overrides, keyed by the `name` field from briihass.yaml.
+# An empty entry ({}) means "use defaults". Any field not specified
+# also inherits the default. Beacons listed in briihass.yaml but
+# absent here just use defaults.
+#
+# A beacon name listed here that does NOT exist in briihass.yaml is
+# an error (the bridge refuses to start).
+beacons:
+  example_tag_1: {}
+  example_tag_2:
+    # Hold sticky longer for beacons with slower or noisier
+    # arrival patterns.
+    sticky_after_arrival_s: 180

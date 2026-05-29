@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>briihass — status</title>
+<meta http-equiv="refresh" content="5">
+<link rel="stylesheet" href="/admin-static/style.css">
+</head>
+<body>
+<header>
+  <h1>briihass <span class="muted">status</span></h1>
+  {{ template "nav" "status" }}
+</header>
+
+<section>
+  <p class="muted small">As of {{ fmtTime .Now }}. Auto-refresh every 5 s.</p>
+
+  {{ if .Beacons }}
+  {{ range .Beacons }}
+  <article class="beacon">
+    <h2>{{ .Name }} <span class="muted small">({{ .Kind }} &middot; {{ .Key }})</span></h2>
+    <p>
+      <strong>State:</strong> <code>{{ .CurrentZone }}</code>
+      {{ if .CurrentAP }} <span class="muted">via {{ .CurrentAP }}</span>{{ end }}
+      {{ if .StickyActive }} <span class="badge">sticky</span>{{ end }}
+    </p>
+    <p class="muted small">Last arrival: {{ fmtTime .LastArrival }}</p>
+
+    {{ if .APs }}
+    <table>
+      <thead>
+        <tr>
+          <th>AP MAC</th>
+          <th>AP name</th>
+          <th class="num">last RSSI</th>
+          <th class="num">EWMA</th>
+          <th class="num">effective</th>
+          <th class="num">age</th>
+          <th>presence</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .APs }}
+        <tr>
+          <td><code>{{ .Mac }}</code></td>
+          <td>{{ .Name }}</td>
+          <td class="num">{{ .LastRSSI }}</td>
+          <td class="num">{{ fmtFloat .EWMARSSI }}</td>
+          <td class="num">{{ fmtFloat .EffectiveRSSI }}</td>
+          <td class="num">{{ fmtAge .AgeSeconds }}</td>
+          <td>{{ if .InPresence }}<span class="ok">yes</span>{{ else }}<span class="muted">no</span>{{ end }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+    {{ else }}
+    <p class="muted small">No AP has reported this beacon yet.</p>
+    {{ end }}
+  </article>
+  {{ end }}
+  {{ else }}
+  <p class="muted">No beacons tracked. Promote one from <a href="/admin/devices">/admin/devices</a>.</p>
+  {{ end }}
+</section>
+
+<section>
+  <h2>Heartbeat</h2>
+  {{ if .Heartbeat.Known }}
+    <p>{{ len .Heartbeat.Online }} gateway(s) online, {{ len .Heartbeat.Offline }} offline.</p>
+    {{ if .Heartbeat.Online }}<p class="muted small">Online: {{ range .Heartbeat.Online }}<code>{{ . }}</code> {{ end }}</p>{{ end }}
+    {{ if .Heartbeat.Offline }}<p class="muted small">Offline: {{ range .Heartbeat.Offline }}<code>{{ . }}</code> {{ end }}</p>{{ end }}
+  {{ else }}
+    <p class="muted">No heartbeat received yet.</p>
+  {{ end }}
+</section>
+
+<section>
+  <h2>MQTT publisher</h2>
+  {{ if .MQTT.Known }}
+    <p>
+      <strong>Connected:</strong> {{ if .MQTT.Connected }}<span class="ok">yes</span>{{ else }}<span class="bad">no</span>{{ end }}.
+      Queue {{ .MQTT.QueueDepth }} / {{ .MQTT.QueueCapacity }}.
+      OK {{ .MQTT.PublishOK }}, errors {{ .MQTT.PublishErr }}, dropped {{ .MQTT.Dropped }}.
+    </p>
+  {{ else }}
+    <p class="muted">No MQTT status wired.</p>
+  {{ end }}
+</section>
+
+<footer>
+  <p class="muted small">briihass commit <code>{{ .Commit }}</code></p>
+</footer>
+</body>
+</html>

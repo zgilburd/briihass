@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>briihass — settings</title>
+<link rel="stylesheet" href="/admin-static/style.css">
+</head>
+<body>
+<header>
+  <h1>briihass <span class="muted">settings</span></h1>
+  {{ template "nav" "settings" }}
+</header>
+
+{{ if .Notice }}<section class="notice"><p>{{ .Notice }}</p></section>{{ end }}
+{{ if .Error }}<section class="errors"><p>{{ .Error }}</p></section>{{ end }}
+
+{{ if .LoadFailed }}
+<section class="errors">
+  <p class="muted small">Settings load is failing, so the form is hidden to prevent overwriting valid values with zeros. Refresh after Postgres recovers; check <code>/metrics</code> and the bridge logs for the underlying error.</p>
+</section>
+{{ else }}
+<form method="post" action="/admin/settings">
+  <table class="form">
+    <tr><th><label for="retention_days">retention_days</label></th>
+        <td><input type="number" id="retention_days" name="retention_days" min="1" max="30" value="{{ .Current.RetentionDays }}"></td>
+        <td class="muted small">Days of observations + raw POST envelopes to keep. The hourly retention worker prunes anything older.</td></tr>
+    <tr><th><label for="capture_per_event_hex">capture_per_event_hex</label></th>
+        <td><input type="checkbox" id="capture_per_event_hex" name="capture_per_event_hex"{{ if .Current.CapturePerEventHex }} checked{{ end }}></td>
+        <td class="muted small">Store each event's raw BLE advert hex on the observation row. Required for the per-device TLV-walk debug view. ~100&ndash;200 bytes/row.</td></tr>
+    <tr><th><label for="capture_full_posts">capture_full_posts</label></th>
+        <td><input type="checkbox" id="capture_full_posts" name="capture_full_posts"{{ if .Current.CaptureFullPosts }} checked{{ end }}></td>
+        <td class="muted small">Store every /ingest and /heartbeat envelope (gzipped). Heavier &mdash; ~10&ndash;50 KB per POST.</td></tr>
+  </table>
+  <p><button type="submit">save</button></p>
+</form>
+{{ end }}
+
+<footer>
+  <p class="muted small">briihass commit <code>{{ .Commit }}</code></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{{ define "nav" -}}
+<nav>
+  <a href="/admin/status"{{ if eq . "status" }} class="active"{{ end }}>status</a>
+  <a href="/admin/devices"{{ if eq . "devices" }} class="active"{{ end }}>devices</a>
+  <a href="/admin/zones"{{ if eq . "zones" }} class="active"{{ end }}>zones</a>
+  <a href="/admin/tunables"{{ if eq . "tunables" }} class="active"{{ end }}>tunables</a>
+  <a href="/admin/settings"{{ if eq . "settings" }} class="active"{{ end }}>settings</a>
+</nav>
+{{- end }}

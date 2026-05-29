@@ -1,0 +1,17 @@
+defaults:
+  alpha: 0.4
+  grace_period_s: 5
+  decay_rate_db_per_s: 2.0
+  presence_floor_dbm: -95
+  t_away_max_s: 30
+  sticky_after_arrival_s: 120
+  hysteresis_db: 4.0
+  confirm_count: 2
+
+beacons:
+  example_tag_1: {}
+  example_tag_2:
+    sticky_after_arrival_s: 180
+  example_tag_3:
+    alpha: 0.5
+    decay_rate_db_per_s: 1.5

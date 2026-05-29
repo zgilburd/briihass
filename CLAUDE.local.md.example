@@ -1,0 +1,46 @@
+# CLAUDE.local.md (template)
+
+Copy this file to `CLAUDE.local.md` (gitignored) and fill in YOUR environment.
+This is where deployment, CI, and secret-management specifics live so that the
+committed repo stays generic and publishable. Nothing here is committed.
+
+> Replace every `<placeholder>` below. Do **not** commit real hostnames, IPs,
+> registry paths, or secret values to the public repo — they belong here only.
+
+## Deployment
+
+- Image registry / repo: `<registry-host>/<owner>/briihass`
+- Deploy mechanism: `<e.g. GitOps via your infra repo + ArgoCD / Helm / plain
+  kubectl / docker compose>`
+- Image tags: pin to immutable SHAs (not `:latest`).
+- Rollout strategy notes: `<e.g. RollingUpdate maxUnavailable:0 / maxSurge:1 +
+  preStop drain to avoid the load-balancer no-backend gap on restart>`
+- Any "never do X" guardrails for your platform: `<...>`
+
+## CI
+
+- Where the build pipeline lives: `<e.g. .github/workflows, your CI server>`
+- What it does: `<build → push SHA-tagged image → open image-bump PR → sync>`
+- Required CI secrets/tokens (names only): `<REGISTRY_USER, REGISTRY_TOKEN, …>`
+
+## Hosts & networking
+
+- Bridge ingress hostname: `<briihass.example.internal>`
+- MQTT broker URL (`MQTT_BROKER_URL`): `<tcp://mqtt.example.internal:1883>`
+- Postgres host (`BRIIHASS_POSTGRES_DSN`): `<db.example.internal:5432>`
+- vRIoT controller / source IP allowlist (`INGEST_ALLOWED_CIDRS`): `<a.b.c.d/32>`
+
+## Secrets
+
+- Where prod secrets come from: `<your secret manager / sealed secrets in your
+  infra repo>`. **Never committed to this repo.**
+- Dev: `~/.config/briihass/credentials.env` (mode 600), managed by
+  `scripts/dev-creds.sh`. See [ADR-0003](docs/adr/0003-credential-handling.md).
+- Required credential env vars: `INGEST_SHARED_SECRET`, `MQTT_USER`/`MQTT_PASS`,
+  `BRIIHASS_POSTGRES_DSN`, and `ADMIN_USER`/`ADMIN_PASS` for the admin UI.
+
+## Operator runbooks (local)
+
+If you keep environment-specific runbooks (deploy steps, credential rotation,
+broker user management), put them alongside this file or in your infra repo —
+not in the public tree.
